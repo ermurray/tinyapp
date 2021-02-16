@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const morgan = require('morgan');
 const app = express();
 const PORT = 8080;
 
@@ -11,7 +12,7 @@ const generateRandomString = function() {
   return Math.random().toString(36).substr(2,6);
   
 };
-
+app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
 app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 
@@ -50,6 +51,12 @@ app.get('/hello', (req, res) => {
 
 app.get('/', (req, res) => {
   res.send('Hello!');
+});
+
+app.post('/urls/:shortURL/delete', (req, res) => {
+  console.log('you want to delete', urlDatabase[req.params.shortURL]);
+  delete urlDatabase[req.params.shortURL];
+  res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
