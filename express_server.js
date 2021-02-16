@@ -4,11 +4,12 @@ const app = express();
 const PORT = 8080;
 
 const urlDatabase = {
-  "b2xVn2": 'http://www.lighthouselabs.ca',
-  "9sm5xK": 'http://www.google.com'
+  'b2xVn2': 'http://www.lighthouselabs.ca',
+  '9sm5xK': 'http://www.google.com'
 };
 const generateRandomString = function() {
-
+  return Math.random().toString(36).substr(2,6);
+  
 };
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -24,8 +25,15 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.post('/urls', (req, res) => {
+  urlDatabase[generateRandomString()] = req.body.longURL;
   console.log(req.body);
-  res.send('OK');
+  
+  res.redirect('/urls/:shortURL');
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.get('/urls/:shortURL', (req, res) => {
