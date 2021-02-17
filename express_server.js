@@ -9,8 +9,8 @@ const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com'
 };
-const generateRandomString = function() {
-  return Math.random().toString(36).substr(2,6);
+const generateRandomString = function(length = 6) {
+  return Math.random().toString(36).substr(2,length);
   
 };
 
@@ -50,9 +50,21 @@ app.get('/urls/new', (req, res) => {
 });
 
 //need to deal with _header partial login for registration page.
-app.get('/registration', (req, res) => {
+app.get('/register', (req, res) => {
 
   res.render('urls_register');
+});
+
+app.post('/register', (req, res) => {
+  const randomID = generateRandomString(8);
+  users[randomID] = {
+    id: randomID,
+    email: req.body['email'],
+    password: req.body['password']
+  };
+  res.cookie('user_id', randomID);
+  console.log(users);
+  res.redirect('/urls');
 });
 
 // has bug that if url is entered with /urls/blah will allow creation of new entry with that shortURL.....
@@ -92,9 +104,11 @@ app.get("/u/:shortURL", (req, res) => {
 app.get('/', (req, res) => {
   res.send('Hello!');
 });
+
 app.get('/urls/:shortURL/edit', (req, res) => {
   res.redirect(`/urls/${req.params.shortURL}`);
 });
+
 app.post('/urls/:id', (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL;
   res.redirect('/urls');
