@@ -14,6 +14,20 @@ const generateRandomString = function() {
   
 };
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "example@example.com",
+    password: "blah-dah-wat"
+
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "test@example.com",
+    password: "wat-what-why"
+  }
+};
+
 //MIDDLEWARE
 app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
 app.use(bodyParser.urlencoded({extended: true}));
@@ -33,6 +47,12 @@ app.get('/urls', (req, res) => {
 app.get('/urls/new', (req, res) => {
   const templateVars = {username: req.cookies['username']};
   res.render('urls_new', templateVars);
+});
+
+//need to deal with _header partial login for registration page.
+app.get('/registration', (req, res) => {
+
+  res.render('urls_register');
 });
 
 // has bug that if url is entered with /urls/blah will allow creation of new entry with that shortURL.....
