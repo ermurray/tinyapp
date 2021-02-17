@@ -35,6 +35,7 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new', templateVars);
 });
 
+// has bug that if url is entered with /urls/blah will allow creation of new entry with that shortURL.....
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
@@ -82,6 +83,11 @@ app.post('/urls/:id', (req, res) => {
 app.post('/urls/:shortURL/delete', (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
+});
+
+app.get('*', (req, res) => {
+  res.status(404);
+  res.render('urls_404');
 });
 
 app.listen(PORT, () => {
