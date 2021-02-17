@@ -17,12 +17,12 @@
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
-        <h3>Edit TinyURL</h3>
-      <form class="form-inline" action="/urls" method="POST">
+        <h3>Edit Long URL</h3>
+      <form class="form-inline card-body" action="/urls/<%= longURL %>/confirmEdit" method="POST">
         <div class="form-group mb-2">
-          <label for="longURL">Enter a URL:</label>
+          <label for="longURL">Edit long URL:</label>
           <input class="form-control" type="text" name="longURL" placeholder="http://" style="width: 300px; margin: 1em">
-          <button type="submit" class="btn btn-primary">Submit</button>
+          <button type="submit" class="btn btn-primary">Confirm</button>
         </div>
       </form>
       </div>
