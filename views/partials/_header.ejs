@@ -19,12 +19,18 @@
       </div>
     </div>
     <div class= "navbar-nav">
+      <% if (username === undefined) { %> 
       <form class="form-inline" action="/login" method="POST">
-        <label><%= username %></label>
         <input class= "form-control-sm" type="text" name="username"
         placeHolder="username">
         <button type="submit" class="btn  btn-success btn-sm">login</button>
       </form>
+      <% } else { %>
+      <form class="form-inline" action="/logout" method="POST">
+        <label>Logged in as: <%= username %></label>
+        <button type="submit" class="btn  btn-success btn-sm">logout</button>
+      </form>
+        <% } %>
 
     </div>
   </nav>
