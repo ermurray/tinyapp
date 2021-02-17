@@ -26,14 +26,14 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.post('/urls', (req, res) => {
-  urlDatabase[generateRandomString()] = req.body.longURL;
-  console.log(req.body);
-  
-  res.redirect('/urls/:shortURL');
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
+  //console.log('href here', longURL);
   res.redirect(longURL);
 });
 
@@ -45,22 +45,18 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
-app.get('/hello', (req, res) => {
-  res.send('<html><body> hello <b>World</b><b/body<html>\n');
-});
-
 app.get('/', (req, res) => {
   res.send('Hello!');
 });
 app.get('/urls/:shortURL/edit', (req, res) => {
   res.redirect(`/urls/${req.params.shortURL}`);
 });
-app.post('/urls/:longURL/confirmEdit', (req, res) => {
-
+app.post('/urls/:id', (req, res) => {
+  urlDatabase[req.params.id] = req.body.longURL;
+  res.redirect('/urls');
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  console.log('you want to delete', urlDatabase[req.params.shortURL]);
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
 });
