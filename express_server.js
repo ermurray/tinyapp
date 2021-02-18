@@ -27,6 +27,14 @@ const users = {
     password: "wat-what-why"
   }
 };
+const verifyUser = function(loginEmail, loginPassword) {
+    for(const user in users) {
+      if(users[user].email === loginEmail && users[user].password === loginPassword) {
+        return users[user].id;
+      }
+    }
+  return false;
+};
 
 const checkEmail = function(regEmail) {
   for (const user in users) {
@@ -98,12 +106,21 @@ app.get('/login', (req, res) => {
   res.render('urls_login', templateVars);
 });
 
-// app.post('/login',(req, res) => {
-  
-//   const username = req.body.username;
-//   res.cookie('user_id', );
-//   res.redirect('/urls');
-// });
+app.post('/login',(req, res) => {
+  if (req.body['email'] === '' || req.body['password'] === '') {
+    res.status(400).send('cannot have blank email or password');
+  } else if (checkEmail(req.body['email'])) {
+    const userID = verifyUser(req.body['email'], req.body['password']);
+    if (userID) {
+      res.cookie('user_id', userID);
+      res.redirect('/urls');
+    } else {
+      res.sendStatus(403);
+    }
+  } else {
+    res.sendStatus(403);
+  }
+});
 
 // has bug that if url is entered with /urls/blah will allow creation of new entry with that shortURL.....
 app.get('/urls/:shortURL', (req, res) => {
