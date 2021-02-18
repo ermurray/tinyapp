@@ -28,6 +28,15 @@ const users = {
   }
 };
 
+const checkEmail = function(regEmail) {
+  for (const user in users) {
+    if (users[user].email === regEmail) {
+      return true;
+    }
+  }
+  return false;
+};
+
 //MIDDLEWARE
 app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
 app.use(bodyParser.urlencoded({extended: true}));
@@ -37,12 +46,15 @@ app.set('view engine', 'ejs');
 
 
 app.get('/urls', (req, res) => {
-  const templateVars = {
-    urls: urlDatabase,
-    user: users[req.cookies['user_id']]
-  };
-  console.log(templateVars.user);
-  res.render('urls_index', templateVars);
+  if (req.cookies['user_id']) {
+    const templateVars = {
+      urls: urlDatabase,
+      user: users[req.cookies['user_id']]
+    };
+    console.log(templateVars.user);
+    res.render('urls_index', templateVars);
+  }
+  res.redirect('/register');
 });
 
 app.get('/urls/new', (req, res) => {
@@ -59,15 +71,22 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-  const randomID = generateRandomString(8);
-  users[randomID] = {
-    id: randomID,
-    email: req.body['email'],
-    password: req.body['password']
-  };
-  res.cookie('user_id', randomID);
-  console.log(users);
-  res.redirect('/urls');
+  if (req.body['email'] === '' || req.body['password'] === '') {
+    res.status(400).send('cannot have blank email or password');
+  } else if (checkEmail(req.body['email'])) {
+    res.status(400).send('email already in use');
+  } else {
+    const randomID = generateRandomString(8);
+    users[randomID] = {
+      id: randomID,
+      email: req.body['email'],
+      password: req.body['password']
+    };
+    res.cookie('user_id', randomID);
+    console.log(users);
+    res.redirect('/urls');
+  }
+
 });
 
 // has bug that if url is entered with /urls/blah will allow creation of new entry with that shortURL.....
@@ -88,7 +107,7 @@ app.get('/urls/:shortURL', (req, res) => {
 // });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
