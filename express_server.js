@@ -64,10 +64,12 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new', templateVars);
 });
 
-//need to deal with _header partial login for registration page.
-app.get('/register', (req, res) => {
 
-  res.render('urls_register');
+app.get('/register', (req, res) => {
+  const templateVars = {
+    user: users[req.cookies['user_id']]
+  };
+  res.render('urls_register', templateVars);
 });
 
 app.post('/register', (req, res) => {
@@ -89,6 +91,20 @@ app.post('/register', (req, res) => {
 
 });
 
+app.get('/login', (req, res) => {
+  const templateVars = {
+    user: users[req.cookies['user_id']]
+  };
+  res.render('urls_login', templateVars);
+});
+
+// app.post('/login',(req, res) => {
+  
+//   const username = req.body.username;
+//   res.cookie('user_id', );
+//   res.redirect('/urls');
+// });
+
 // has bug that if url is entered with /urls/blah will allow creation of new entry with that shortURL.....
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
@@ -99,16 +115,10 @@ app.get('/urls/:shortURL', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
-// app.post('/login',(req, res) => {
-  
-//   const username = req.body.username;
-//   res.cookie('username', username);
-//   res.redirect('/urls');
-// });
 
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
-  res.redirect('/urls');
+  res.redirect('/login');
 });
 
 app.post('/urls', (req, res) => {
