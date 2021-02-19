@@ -50,7 +50,8 @@ app.get('/urls', (req, res) => {
     };
     return res.render('urls_index', templateVars);
   }
-  res.redirect('/login');
+  
+  res.redirect('/urls');
 });
 
 app.get('/urls/new', (req, res) => {
@@ -164,7 +165,10 @@ app.get("/u/:shortURL", (req, res) => {
 
 
 app.get('/', (req, res) => {
-  res.redirect('/login');
+  if (!req.session['user_id']) {
+    res.redirect('/login');
+  }
+  res.redirect('/urls');
 });
 
 app.get('/urls/:shortURL/edit', (req, res) => {
