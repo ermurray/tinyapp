@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080;
@@ -59,17 +59,20 @@ const checkEmail = function(regEmail) {
 //MIDDLEWARE
 app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['teeny', 'tiny', 'yellow', 'youKnowThe', 'REST']
+}));
 app.set('view engine', 'ejs');
 
 
 
 app.get('/urls', (req, res) => {
-  if (req.cookies['user_id']) {
-    const userURLs = urlsForUser(req.cookies['user_id']);
+  if (req.session['user_id']) {
+    const userURLs = urlsForUser(req.session['user_id']);
     const templateVars = {
       urls: userURLs,
-      user: users[req.cookies['user_id']]
+      user: users[req.session['user_id']]
     };
     return res.render('urls_index', templateVars);
   }
@@ -77,11 +80,11 @@ app.get('/urls', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  if (req.cookies['user_id']) {
+  if (req.session['user_id']) {
     
     const templateVars = {
       urls: urlDatabase,
-      user: users[req.cookies['user_id']]
+      user: users[req.session['user_id']]
     };
     res.render('urls_new', templateVars);
   }
@@ -91,7 +94,7 @@ app.get('/urls/new', (req, res) => {
 
 app.get('/register', (req, res) => {
   const templateVars = {
-    user: users[req.cookies['user_id']]
+    user: users[req.session['user_id']]
   };
   res.render('urls_register', templateVars);
 });
@@ -114,15 +117,14 @@ app.post('/register', (req, res) => {
         password: hash
       };
       console.log(hash);
-      res.cookie('user_id', randomID);
-      res.redirect('/urls');
+      res.redirect('/login');
     });
   });
 });
 
 app.get('/login', (req, res) => {
   const templateVars = {
-    user: users[req.cookies['user_id']]
+    user: users[req.session['user_id']]
   };
   res.render('urls_login', templateVars);
 });
@@ -137,7 +139,7 @@ app.post('/login',(req, res) => {
   bcrypt.compare(submitedPassword, users[userID].password, (err, result) => {
     console.log(result);
     if (result) {
-      res.cookie('user_id', userID);
+      req.session['user_id'] = userID;
       res.redirect('/urls');
       return;
     } else {
@@ -153,22 +155,29 @@ app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
-    user: users[req.cookies['user_id']]
+    user: users[req.session['user_id']]
   };
   res.render('urls_show', templateVars);
 });
 
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session['user_id'] = null;
   res.redirect('/login');
 });
 
 app.post('/urls', (req, res) => {
+  if (req.body.createURL === '') {
+    return res.status(400).send('cannot set empty long URL');
+  }
+  let newURL = req.body.createURL;
   const shortURL = generateRandomString();
+  if (!newURL.startsWith('http')) {
+    newURL = `http://${newURL}`;
+  }
   urlDatabase[shortURL] = {
-    longURL: req.body.newURL,
-    userID: req.cookies['user_id']
+    longURL: newURL,
+    userID: req.session['user_id']
   };
 
   res.redirect(`/urls/${shortURL}`);
@@ -193,7 +202,6 @@ app.post('/urls/:id', (req, res) => {
     return res.status(400).send('cannot set empty long URL');
   }
   const newURL = req.body.longURL;
-  console.log(!newURL.startsWith('http://'));
   if (!newURL.startsWith('http')) {
     urlDatabase[req.params.id].longURL = `http://${newURL}`;
     return res.redirect('/urls');
@@ -203,9 +211,9 @@ app.post('/urls/:id', (req, res) => {
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  if (req.cookies['user_id']) {
+  if (req.session['user_id']) {
     const urlToDelete = req.params.shortURL;
-    const userURLs = Object.keys(urlsForUser(req.cookies['user_id']));
+    const userURLs = Object.keys(urlsForUser(req.session['user_id']));
     if (userURLs.includes(urlToDelete))
       delete urlDatabase[req.params.shortURL];
     return res.redirect('/urls');
