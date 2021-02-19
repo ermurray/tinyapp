@@ -39,7 +39,7 @@ app.use(cookieSession({
 app.set('view engine', 'ejs');
 
 
-//
+//EndPoints
 app.get('/urls', (req, res) => {
   if (req.session['user_id']) {
     const userURLs = urlsForUser(req.session['user_id'], urlDatabase);
