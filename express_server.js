@@ -29,10 +29,10 @@ const users = {
     password: "$2a$10$WeViIClb6R6n0/F8520rS.ctshaSrYZhy8aGes626LRb4ZCjjNFWG"
   }
 };
-const findUserID = function(loginEmail) {
-  for (const user in users) {
-    if (users[user].email === loginEmail) {
-      return users[user].id;
+const getUserByEmail = function(loginEmail, database) {
+  for (const user in database) {
+    if (database[user].email === loginEmail) {
+      return database[user].id;
     }
   }
 };
@@ -132,7 +132,7 @@ app.get('/login', (req, res) => {
 app.post('/login',(req, res) => {
   const email = req.body.email;
   const submitedPassword = req.body.password;
-  const userID = findUserID(email);
+  const userID = getUserByEmail(email, users);
   if (!checkEmail(email)) {
     return res.status(401).send('invalid email or password');
   }
