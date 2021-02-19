@@ -164,7 +164,6 @@ app.get("/u/:shortURL", (req, res) => {
 
 
 app.get('/', (req, res) => {
-  res.send('Hello!');
   res.redirect('/login');
 });
 
