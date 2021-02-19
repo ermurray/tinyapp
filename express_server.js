@@ -7,11 +7,11 @@ const { getUserByEmail, urlsForUser, checkEmail, generateRandomString} = require
 const app = express();
 const PORT = 8080;
 
+//temp fakeDatabase objects
 const urlDatabase = {
   'b2xVn2': {longURL:'http://www.lighthouselabs.ca', userID: '1a2b3c'},
   '9sm5xK': {longURL:'http://www.google.com', userID: '1a2b3c'}
 };
-
 
 
 const users = {
@@ -165,6 +165,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get('/', (req, res) => {
   res.send('Hello!');
+  res.redirect('/login');
 });
 
 app.get('/urls/:shortURL/edit', (req, res) => {
