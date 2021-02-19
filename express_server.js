@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080;
 
@@ -19,22 +20,21 @@ const users = {
   "1a2b3c": {
     id: "1a2b3c",
     email: "example@example.com",
-    password: "1234"
+    password: "$2a$10$uVXOrZ7FtDyKDRTHqlpcGuVaPByoT0/Y41EXl7hEZEB32dp6WMuKi"
 
   },
   "2b3c4d": {
     id: "2b3c4d",
     email: "test@example.com",
-    password: "4321"
+    password: "$2a$10$WeViIClb6R6n0/F8520rS.ctshaSrYZhy8aGes626LRb4ZCjjNFWG"
   }
 };
-const verifyUser = function(loginEmail, loginPassword) {
+const findUserID = function(loginEmail) {
   for (const user in users) {
-    if (users[user].email === loginEmail && users[user].password === loginPassword) {
+    if (users[user].email === loginEmail) {
       return users[user].id;
     }
   }
-  return false;
 };
 
 const urlsForUser = function(userID) {
@@ -71,7 +71,7 @@ app.get('/urls', (req, res) => {
       urls: userURLs,
       user: users[req.cookies['user_id']]
     };
-    res.render('urls_index', templateVars);
+    return res.render('urls_index', templateVars);
   }
   res.redirect('/login');
 });
@@ -98,21 +98,26 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
   if (req.body['email'] === '' || req.body['password'] === '') {
-    res.status(400).send('cannot have blank email or password');
-  } else if (checkEmail(req.body['email'])) {
-    res.status(400).send('email already in use');
-  } else {
-    const randomID = generateRandomString(8);
-    users[randomID] = {
-      id: randomID,
-      email: req.body['email'],
-      password: req.body['password']
-    };
-    res.cookie('user_id', randomID);
-    console.log(users);
-    res.redirect('/urls');
+    return res.status(400).send('cannot have blank email or password');
   }
-
+  if (checkEmail(req.body['email'])) {
+    return res.status(400).send('email already in use');
+  }
+  const randomID = generateRandomString(8);
+  const password = req.body.password;
+  const email = req.body.email;
+  bcrypt.genSalt(10, (err, salt) => {
+    bcrypt.hash(password, salt, (err, hash) =>{
+      users[randomID] = {
+        id: randomID,
+        email,
+        password: hash
+      };
+      console.log(hash);
+      res.cookie('user_id', randomID);
+      res.redirect('/urls');
+    });
+  });
 });
 
 app.get('/login', (req, res) => {
@@ -123,23 +128,28 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login',(req, res) => {
-  if (req.body['email'] === '' || req.body['password'] === '') {
-    res.status(400).send('cannot have blank email or password');
-  } else if (checkEmail(req.body['email'])) {
-    const userID = verifyUser(req.body['email'], req.body['password']);
-    if (userID) {
+  const email = req.body.email;
+  const submitedPassword = req.body.password;
+  const userID = findUserID(email);
+  if (!checkEmail(email)) {
+    return res.status(401).send('invalid email or password');
+  }
+  bcrypt.compare(submitedPassword, users[userID].password, (err, result) => {
+    console.log(result);
+    if (result) {
       res.cookie('user_id', userID);
       res.redirect('/urls');
+      return;
     } else {
       res.sendStatus(403);
     }
-  } else {
-    res.sendStatus(403);
-  }
+  });
 });
 
-// has bug that if url is entered with /urls/blah will allow creation of new entry with that shortURL.....
 app.get('/urls/:shortURL', (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.redirect('/404');
+  }
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
@@ -180,30 +190,27 @@ app.get('/urls/:shortURL/edit', (req, res) => {
 
 app.post('/urls/:id', (req, res) => {
   if (req.body.longURL === '') {
-    res.status(400).send('cannot set empty long URL');
+    return res.status(400).send('cannot set empty long URL');
   }
   const newURL = req.body.longURL;
   console.log(!newURL.startsWith('http://'));
   if (!newURL.startsWith('http')) {
     urlDatabase[req.params.id].longURL = `http://${newURL}`;
-    res.redirect('/urls');
-  } else {
-    urlDatabase[req.params.id].longURL = newURL;
-    res.redirect('/urls');
+    return res.redirect('/urls');
   }
+  urlDatabase[req.params.id].longURL = newURL;
+  res.redirect('/urls');
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   if (req.cookies['user_id']) {
     const urlToDelete = req.params.shortURL;
-    console.log(urlToDelete);
     const userURLs = Object.keys(urlsForUser(req.cookies['user_id']));
     if (userURLs.includes(urlToDelete))
       delete urlDatabase[req.params.shortURL];
-    res.redirect('/urls');
-  } else {
-    res.status(401).send('unauthorized to delete this url');
+    return res.redirect('/urls');
   }
+  res.status(401).send('unauthorized to delete this url');
 });
 
 app.get('*', (req, res) => {
