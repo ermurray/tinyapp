@@ -1,4 +1,9 @@
 //helper functions for express_server.js
+const generateRandomString = function(length = 6) {
+  return Math.random().toString(36).substr(2,length);
+  
+};
+
 const getUserByEmail = function(loginEmail, database) {
   for (const user in database) {
     if (database[user].email === loginEmail) {
@@ -27,6 +32,7 @@ const checkEmail = function(regEmail, database) {
 };
 
 module.exports = {
+  generateRandomString,
   getUserByEmail,
   urlsForUser,
   checkEmail

@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-const { getUserByEmail, urlsForUser, checkEmail} = require('./helpers');
+const { getUserByEmail, urlsForUser, checkEmail, generateRandomString} = require('./helpers');
 const app = express();
 const PORT = 8080;
 
@@ -12,10 +12,7 @@ const urlDatabase = {
   '9sm5xK': {longURL:'http://www.google.com', userID: '1a2b3c'}
 };
 
-const generateRandomString = function(length = 6) {
-  return Math.random().toString(36).substr(2,length);
-  
-};
+
 
 const users = {
   "1a2b3c": {
@@ -80,7 +77,7 @@ app.post('/register', (req, res) => {
   if (req.body['email'] === '' || req.body['password'] === '') {
     return res.status(400).send('cannot have blank email or password');
   }
-  if (checkEmail(req.body['email']), users) {
+  if (checkEmail(req.body['email'], users)) {
     return res.status(400).send('email already in use');
   }
   const randomID = generateRandomString(8);
@@ -175,6 +172,9 @@ app.get('/urls/:shortURL/edit', (req, res) => {
 });
 
 app.post('/urls/:id', (req, res) => {
+  if (!req.session['user_id']) {
+    return res.status(401).send('not authorized to edit url');
+  }
   if (req.body.longURL === '') {
     return res.status(400).send('cannot set empty long URL');
   }
