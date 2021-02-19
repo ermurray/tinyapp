@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const { getUserByEmail, urlsForUser, checkEmail} = require('./helpers');
 const app = express();
 const PORT = 8080;
 
@@ -29,32 +30,7 @@ const users = {
     password: "$2a$10$WeViIClb6R6n0/F8520rS.ctshaSrYZhy8aGes626LRb4ZCjjNFWG"
   }
 };
-const getUserByEmail = function(loginEmail, database) {
-  for (const user in database) {
-    if (database[user].email === loginEmail) {
-      return database[user].id;
-    }
-  }
-};
 
-const urlsForUser = function(userID) {
-  let userURLs = {};
-  for (const url in urlDatabase) {
-    if (urlDatabase[url].userID === userID) {
-      userURLs[url] = urlDatabase[url].longURL;
-    }
-  }
-  return userURLs;
-};
-
-const checkEmail = function(regEmail) {
-  for (const user in users) {
-    if (users[user].email === regEmail) {
-      return true;
-    }
-  }
-  return false;
-};
 
 //MIDDLEWARE
 app.use(morgan(':method :url :status :response-time ms - :res[content-length]'));
@@ -69,7 +45,8 @@ app.set('view engine', 'ejs');
 
 app.get('/urls', (req, res) => {
   if (req.session['user_id']) {
-    const userURLs = urlsForUser(req.session['user_id']);
+    const userURLs = urlsForUser(req.session['user_id'], urlDatabase);
+    console.log(userURLs);
     const templateVars = {
       urls: userURLs,
       user: users[req.session['user_id']]
@@ -103,7 +80,7 @@ app.post('/register', (req, res) => {
   if (req.body['email'] === '' || req.body['password'] === '') {
     return res.status(400).send('cannot have blank email or password');
   }
-  if (checkEmail(req.body['email'])) {
+  if (checkEmail(req.body['email']), users) {
     return res.status(400).send('email already in use');
   }
   const randomID = generateRandomString(8);
@@ -133,7 +110,7 @@ app.post('/login',(req, res) => {
   const email = req.body.email;
   const submitedPassword = req.body.password;
   const userID = getUserByEmail(email, users);
-  if (!checkEmail(email)) {
+  if (!checkEmail(email, users)) {
     return res.status(401).send('invalid email or password');
   }
   bcrypt.compare(submitedPassword, users[userID].password, (err, result) => {
@@ -213,7 +190,7 @@ app.post('/urls/:id', (req, res) => {
 app.post('/urls/:shortURL/delete', (req, res) => {
   if (req.session['user_id']) {
     const urlToDelete = req.params.shortURL;
-    const userURLs = Object.keys(urlsForUser(req.session['user_id']));
+    const userURLs = Object.keys(urlsForUser(req.session['user_id'], urlDatabase));
     if (userURLs.includes(urlToDelete))
       delete urlDatabase[req.params.shortURL];
     return res.redirect('/urls');
