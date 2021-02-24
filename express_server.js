@@ -92,8 +92,6 @@ app.post('/register', (req, res) => {
         password: hash
       };
       
-      req.session['user_ID'] = users.id;
-      
       res.redirect('/urls');
     });
   });
