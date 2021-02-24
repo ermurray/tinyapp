@@ -41,7 +41,7 @@ app.set('view engine', 'ejs');
 
 //EndPoints
 app.get('/urls', (req, res) => {
-  if (req.session['user_id']) {
+  if (req.session['user_id']) { //check if user is logged in
     const userURLs = urlsForUser(req.session['user_id'], urlDatabase);
     console.log(userURLs);
     const templateVars = {
@@ -61,13 +61,13 @@ app.get('/urls/new', (req, res) => {
       urls: urlDatabase,
       user: users[req.session['user_id']]
     };
-    res.render('urls_new', templateVars);
+    res.render('urls_new', templateVars); // render urls/new page from template urls_new pass in urls database
   }
   res.redirect('/login');
 });
 
 
-app.get('/register', (req, res) => {
+app.get('/register', (req, res) => { 
   const templateVars = {
     user: users[req.session['user_id']]
   };
@@ -84,6 +84,7 @@ app.post('/register', (req, res) => {
   const randomID = generateRandomString(8);
   const password = req.body.password;
   const email = req.body.email;
+  req.session['user_id'] = randomID; // set cookie for registered user
   bcrypt.genSalt(10, (err, salt) => {
     bcrypt.hash(password, salt, (err, hash) =>{
       users[randomID] = {
@@ -111,7 +112,7 @@ app.post('/login',(req, res) => {
   if (!checkEmail(email, users)) {
     return res.status(401).send('invalid email or password');
   }
-  bcrypt.compare(submitedPassword, users[userID].password, (err, result) => {
+  bcrypt.compare(submitedPassword, users[userID].password, (err, result) => { //compare user entered password and stored hash password
     console.log(result);
     if (result) {
       req.session['user_id'] = userID;
@@ -140,7 +141,7 @@ app.get('/urls/:shortURL', (req, res) => {
 
 
 app.post('/logout', (req, res) => {
-  req.session['user_id'] = null;
+  req.session['user_id'] = null; //remove cookies on logout
   res.redirect('/login');
 });
 
@@ -205,6 +206,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.status(401).send('unauthorized to delete this url');
 });
 
+// 404 catch all for incorect urls
 app.get('*', (req, res) => {
   res.status(404);
   res.render('urls_404');
