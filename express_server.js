@@ -51,7 +51,7 @@ app.get('/urls', (req, res) => {
     return res.render('urls_index', templateVars);
   }
   
-  res.redirect('/urls');
+  res.status(400).send('You are not logged in if you have registered please return to login page.');
 });
 
 app.get('/urls/new', (req, res) => {
@@ -91,8 +91,10 @@ app.post('/register', (req, res) => {
         email,
         password: hash
       };
-      console.log(hash);
-      res.redirect('/login');
+      
+      req.session['user_ID'] = users.id;
+      
+      res.redirect('/urls');
     });
   });
 });
@@ -124,6 +126,9 @@ app.post('/login',(req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
+  if (!req.session['user_id']) {
+    return res.status(401).send('not authorized to access this url');
+  }
   if (!urlDatabase[req.params.shortURL]) {
     return res.redirect('/404');
   }
